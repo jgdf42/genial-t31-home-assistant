@@ -1,0 +1,129 @@
+blueprint:
+  name: Genial T31 rapid-rise fan or smart-plug response
+  description: >-
+    Turns on selected fans or smart plugs when the temperature rate remains
+    above a chosen value and body temperature is high enough to indicate the
+    thermometer is being worn. Runs optional notification actions, turns the
+    targets off after the selected duration, and then observes a cooldown.
+  domain: automation
+  author: Genial T31 Home Assistant contributors
+  homeassistant:
+    min_version: 2024.12.0
+  input:
+    temperature_sensor:
+      name: Body-temperature sensor
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+    rate_sensor:
+      name: Temperature-rate sensor
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+    baseline_sensor:
+      name: Temperature-baseline sensor
+      description: Prevents triggering during the initial five-minute warm-up.
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+    minimum_temperature:
+      name: Minimum body temperature
+      description: Prevents activation while the thermometer is warming up.
+      default: 97.0
+      selector:
+        number:
+          min: 30
+          max: 105
+          step: 0.1
+          mode: box
+    rate_threshold:
+      name: Rise-rate threshold
+      description: Uses the displayed unit per minute of the rate sensor.
+      default: 0.15
+      selector:
+        number:
+          min: 0.01
+          max: 2.0
+          step: 0.01
+          mode: box
+    confirmation_seconds:
+      name: Confirmation time
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 300
+          step: 5
+          unit_of_measurement: seconds
+          mode: slider
+    output_target:
+      name: Fans or smart plugs
+      selector:
+        target:
+          entity:
+            domain:
+              - fan
+              - switch
+    alert_actions:
+      name: Optional notification actions
+      default: []
+      selector:
+        action: {}
+    run_minutes:
+      name: Run duration
+      default: 4
+      selector:
+        number:
+          min: 1
+          max: 30
+          step: 1
+          unit_of_measurement: minutes
+          mode: slider
+    cooldown_minutes:
+      name: Cooldown after turning off
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 120
+          step: 1
+          unit_of_measurement: minutes
+          mode: slider
+
+mode: single
+max_exceeded: silent
+
+variables:
+  baseline_entity: !input baseline_sensor
+
+triggers:
+  - trigger: numeric_state
+    entity_id: !input rate_sensor
+    above: !input rate_threshold
+    for:
+      seconds: !input confirmation_seconds
+
+conditions:
+  - condition: template
+    value_template: >-
+      {{ states(baseline_entity) not in ['unknown', 'unavailable', 'none', ''] }}
+  - condition: numeric_state
+    entity_id: !input temperature_sensor
+    above: !input minimum_temperature
+
+actions:
+  - sequence: !input alert_actions
+  - action: homeassistant.turn_on
+    target: !input output_target
+  - delay:
+      minutes: !input run_minutes
+  - action: homeassistant.turn_off
+    target: !input output_target
+  - delay:
+      minutes: !input cooldown_minutes
+

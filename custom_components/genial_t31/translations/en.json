@@ -1,0 +1,62 @@
+{
+  "title": "Genial T31 Thermometer",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Select a Genial T31",
+        "description": "Select a discovered thermometer.",
+        "data": {
+          "address": "Thermometer"
+        }
+      },
+      "confirm": {
+        "title": "Add Genial T31 Thermometer",
+        "description": "Add {name} ({address})? No account or device key is required."
+      }
+    },
+    "error": {
+      "cannot_connect": "The selected thermometer is no longer available. Wake it and try again."
+    },
+    "abort": {
+      "already_configured": "This thermometer is already configured.",
+      "no_devices_found": "No Genial T31 thermometer was found. Wake it and make sure Tempal is disconnected."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connected": {
+        "name": "Connected"
+      }
+    },
+    "sensor": {
+      "temperature": {
+        "name": "Body temperature"
+      },
+      "auxiliary_temperature": {
+        "name": "Auxiliary temperature"
+      },
+      "temperature_baseline": {
+        "name": "Temperature baseline"
+      },
+      "temperature_rise": {
+        "name": "Temperature rise"
+      },
+      "temperature_rate": {
+        "name": "Temperature rate"
+      },
+      "battery": {
+        "name": "Battery"
+      },
+      "battery_voltage": {
+        "name": "Battery voltage"
+      },
+      "rssi": {
+        "name": "Signal strength"
+      },
+      "last_reading": {
+        "name": "Last reading"
+      }
+    }
+  }
+}
+

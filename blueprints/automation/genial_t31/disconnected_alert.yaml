@@ -1,0 +1,58 @@
+blueprint:
+  name: Genial T31 stale or disconnected alert
+  description: >-
+    Runs notification actions when the Genial T31 connection sensor remains
+    disconnected. A delay suppresses brief Bluetooth interruptions.
+  domain: automation
+  author: Genial T31 Home Assistant contributors
+  homeassistant:
+    min_version: 2024.12.0
+  input:
+    connection_sensor:
+      name: Connected sensor
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class: connectivity
+    disconnected_minutes:
+      name: Time disconnected before alerting
+      default: 2
+      selector:
+        number:
+          min: 1
+          max: 60
+          step: 1
+          unit_of_measurement: minutes
+          mode: slider
+    alert_actions:
+      name: Notification actions
+      selector:
+        action: {}
+    cooldown_minutes:
+      name: Cooldown
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 120
+          step: 1
+          unit_of_measurement: minutes
+          mode: slider
+
+mode: single
+max_exceeded: silent
+
+triggers:
+  - trigger: state
+    entity_id: !input connection_sensor
+    from: "on"
+    to: "off"
+    for:
+      minutes: !input disconnected_minutes
+
+actions:
+  - sequence: !input alert_actions
+  - delay:
+      minutes: !input cooldown_minutes
+

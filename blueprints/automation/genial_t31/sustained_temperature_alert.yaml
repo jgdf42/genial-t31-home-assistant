@@ -1,0 +1,70 @@
+blueprint:
+  name: Genial T31 sustained temperature alert
+  description: >-
+    Runs user-selected notification actions after the body-temperature sensor
+    remains above a threshold. The threshold uses the sensor's displayed unit.
+  domain: automation
+  author: Genial T31 Home Assistant contributors
+  homeassistant:
+    min_version: 2024.12.0
+  input:
+    temperature_sensor:
+      name: Body-temperature sensor
+      selector:
+        entity:
+          filter:
+            - domain: sensor
+              device_class: temperature
+    threshold:
+      name: Alert threshold
+      description: Enter this in the unit displayed by the selected sensor.
+      default: 100.0
+      selector:
+        number:
+          min: 30
+          max: 110
+          step: 0.1
+          mode: box
+    confirmation_seconds:
+      name: Confirmation time
+      description: Temperature must remain above the threshold for this long.
+      default: 60
+      selector:
+        number:
+          min: 0
+          max: 600
+          step: 5
+          unit_of_measurement: seconds
+          mode: slider
+    alert_actions:
+      name: Notification or alert actions
+      description: Select one or more actions, such as a mobile notification.
+      default: []
+      selector:
+        action: {}
+    cooldown_minutes:
+      name: Cooldown
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 120
+          step: 1
+          unit_of_measurement: minutes
+          mode: slider
+
+mode: single
+max_exceeded: silent
+
+triggers:
+  - trigger: numeric_state
+    entity_id: !input temperature_sensor
+    above: !input threshold
+    for:
+      seconds: !input confirmation_seconds
+
+actions:
+  - sequence: !input alert_actions
+  - delay:
+      minutes: !input cooldown_minutes
+

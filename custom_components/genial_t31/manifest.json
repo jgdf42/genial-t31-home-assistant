@@ -1,0 +1,20 @@
+{
+  "domain": "genial_t31",
+  "name": "Genial T31 Thermometer",
+  "bluetooth": [
+    {
+      "connectable": true,
+      "local_name": "Genial-T31*",
+      "service_uuid": "00001809-0000-1000-8000-00805f9b34fb"
+    }
+  ],
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["bluetooth"],
+  "documentation": "https://github.com/jgdf42/genial-t31-home-assistant",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "requirements": [],
+  "version": "1.0.0"
+}
+

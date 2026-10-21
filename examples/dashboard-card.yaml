@@ -1,0 +1,53 @@
+# Replace the example entity IDs with those created by your Genial T31.
+type: vertical-stack
+cards:
+  - type: tile
+    entity: sensor.genial_t31_thermometer_body_temperature
+    name: Genial T31
+    icon: mdi:thermometer-bluetooth
+    color: red
+    vertical: false
+    features_position: bottom
+  - type: horizontal-stack
+    cards:
+      - type: gauge
+        entity: sensor.genial_t31_thermometer_body_temperature
+        name: Body temperature
+        min: 95
+        max: 104
+        needle: true
+        severity:
+          green: 97
+          yellow: 99
+          red: 101
+      - type: gauge
+        entity: sensor.genial_t31_thermometer_battery
+        name: Battery
+        min: 0
+        max: 100
+        needle: true
+        severity:
+          red: 0
+          yellow: 20
+          green: 50
+  - type: history-graph
+    title: Temperature — last hour
+    hours_to_show: 1
+    entities:
+      - entity: sensor.genial_t31_thermometer_body_temperature
+        name: Body
+      - entity: sensor.genial_t31_thermometer_temperature_baseline
+        name: Baseline
+  - type: entities
+    title: Trend and status
+    show_header_toggle: false
+    entities:
+      - entity: sensor.genial_t31_thermometer_temperature_rise
+        name: Rise above baseline
+      - entity: sensor.genial_t31_thermometer_temperature_rate
+        name: Rate of change
+      - entity: binary_sensor.genial_t31_thermometer_connected
+        name: Connected
+      - entity: sensor.genial_t31_thermometer_last_reading
+        name: Last reading
+
