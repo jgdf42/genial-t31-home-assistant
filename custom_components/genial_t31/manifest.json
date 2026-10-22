@@ -12,9 +12,9 @@
   "config_flow": true,
   "dependencies": ["bluetooth"],
   "documentation": "https://github.com/jgdf42/genial-t31-home-assistant",
-  "issue_tracker": "https://github.com/jgdf42/genial-t31-home-assistant/issues",
   "integration_type": "device",
   "iot_class": "local_push",
+  "issue_tracker": "https://github.com/jgdf42/genial-t31-home-assistant/issues",
   "requirements": [],
   "version": "1.2.0"
 }
