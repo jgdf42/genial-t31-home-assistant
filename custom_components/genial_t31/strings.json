@@ -26,6 +26,9 @@
     "binary_sensor": {
       "connected": {
         "name": "Connected"
+      },
+      "worn": {
+        "name": "Worn"
       }
     },
     "sensor": {

@@ -24,7 +24,9 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the connection-status entity."""
-    async_add_entities([T31ConnectionSensor(entry.runtime_data)])
+    async_add_entities(
+        [T31ConnectionSensor(entry.runtime_data), T31WornSensor(entry.runtime_data)]
+    )
 
 
 class T31ConnectionSensor(GenialT31Entity, BinarySensorEntity):
@@ -44,4 +46,22 @@ class T31ConnectionSensor(GenialT31Entity, BinarySensorEntity):
     def is_on(self) -> bool:
         """Return true when the connection has fresh telemetry."""
         return self.coordinator.data.connected
+
+
+class T31WornSensor(GenialT31Entity, BinarySensorEntity):
+    """Whether sustained temperature indicates that the probe is being worn."""
+
+    entity_description = BinarySensorEntityDescription(
+        key="worn",
+        translation_key="worn",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    )
+
+    def __init__(self, coordinator: "GenialT31Coordinator") -> None:
+        super().__init__(coordinator, "worn")
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return the confirmed wear state."""
+        return self.coordinator.data.worn
 

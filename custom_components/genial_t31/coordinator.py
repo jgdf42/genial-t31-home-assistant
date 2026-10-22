@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass, replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import logging
 
 from bleak.exc import BleakError
@@ -26,8 +26,12 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import (
     DEFAULT_NAME,
     NOTIFY_CHARACTERISTIC_UUID,
+    POWER_SAVE_RECHECK_SECONDS,
+    POWER_SAVE_SECONDS,
     RETRY_INTERVAL_SECONDS,
     STALE_AFTER_SECONDS,
+    UNWORN_CONFIRM_SECONDS,
+    UNWORN_TEMPERATURE_CELSIUS,
     WRITE_CHARACTERISTIC_UUID,
 )
 from .protocol import (
@@ -46,6 +50,7 @@ from .protocol import (
     sync_time_command,
 )
 from .trend import TemperatureTrend
+from .wear import WearMonitor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,6 +60,7 @@ class T31Data:
     """State published to Home Assistant entities."""
 
     connected: bool = False
+    worn: bool | None = None
     temperature_celsius: float | None = None
     auxiliary_temperature_celsius: float | None = None
     temperature_baseline_celsius: float | None = None
@@ -86,6 +92,11 @@ class GenialT31Coordinator(DataUpdateCoordinator[T31Data]):
         self._client: BleakClientWithServiceCache | None = None
         self._buffer = bytearray()
         self._trend = TemperatureTrend()
+        self._wear = WearMonitor(
+            UNWORN_TEMPERATURE_CELSIUS,
+            UNWORN_CONFIRM_SECONDS,
+            POWER_SAVE_RECHECK_SECONDS,
+        )
         self._connect_lock = asyncio.Lock()
         self._write_lock = asyncio.Lock()
         self._notification_lock = asyncio.Lock()
@@ -93,6 +104,8 @@ class GenialT31Coordinator(DataUpdateCoordinator[T31Data]):
         self._maintenance_task: asyncio.Task[None] | None = None
         self._unregister_bluetooth: Callable[[], None] | None = None
         self._connected_at: datetime | None = None
+        self._connection_last_temperature_at: datetime | None = None
+        self._power_save_until: datetime | None = None
         self._stopping = False
         self.async_set_updated_data(T31Data())
 
@@ -141,6 +154,11 @@ class GenialT31Coordinator(DataUpdateCoordinator[T31Data]):
 
     @callback
     def _schedule_reconnect(self) -> None:
+        now = datetime.now(UTC)
+        if self._power_save_until is not None:
+            if now < self._power_save_until:
+                return
+            self._power_save_until = None
         if self._stopping or (self._client and self._client.is_connected):
             return
         if self._reconnect_task and not self._reconnect_task.done():
@@ -156,7 +174,7 @@ class GenialT31Coordinator(DataUpdateCoordinator[T31Data]):
         while True:
             await asyncio.sleep(15)
             client = self._client
-            activity_at = self.data.last_temperature_at or self._connected_at
+            activity_at = self._connection_last_temperature_at or self._connected_at
             if client and client.is_connected and activity_at is not None:
                 age = (datetime.now(UTC) - activity_at).total_seconds()
                 if age > STALE_AFTER_SECONDS:
@@ -186,6 +204,8 @@ class GenialT31Coordinator(DataUpdateCoordinator[T31Data]):
                 )
                 self._client = client
                 self._connected_at = datetime.now(UTC)
+                self._connection_last_temperature_at = None
+                self._wear.begin_connection()
                 self._buffer.clear()
                 await client.start_notify(
                     NOTIFY_CHARACTERISTIC_UUID, self._notification_handler
@@ -195,6 +215,7 @@ class GenialT31Coordinator(DataUpdateCoordinator[T31Data]):
                 _LOGGER.debug("Unable to connect to Genial T31 %s: %s", self.address, err)
                 self._client = None
                 self._connected_at = None
+                self._connection_last_temperature_at = None
                 if client and client.is_connected:
                     try:
                         await client.disconnect()
@@ -206,6 +227,7 @@ class GenialT31Coordinator(DataUpdateCoordinator[T31Data]):
         client = self._client
         self._client = None
         self._connected_at = None
+        self._connection_last_temperature_at = None
         if client and client.is_connected:
             try:
                 await client.disconnect()
@@ -218,6 +240,7 @@ class GenialT31Coordinator(DataUpdateCoordinator[T31Data]):
         if client is self._client:
             self._client = None
             self._connected_at = None
+            self._connection_last_temperature_at = None
         self.async_set_updated_data(replace(self.data, connected=False))
         self._schedule_reconnect()
 
@@ -273,13 +296,18 @@ class GenialT31Coordinator(DataUpdateCoordinator[T31Data]):
             return
         if command == COMMAND_TEMPERATURE:
             reading = decode_temperature(body)
+            self._connection_last_temperature_at = now
             baseline, rise, rate = self._trend.update(
+                now, reading.temperature_celsius
+            )
+            worn, should_disconnect = self._wear.update(
                 now, reading.temperature_celsius
             )
             self.async_set_updated_data(
                 replace(
                     self.data,
                     connected=True,
+                    worn=worn,
                     temperature_celsius=reading.temperature_celsius,
                     auxiliary_temperature_celsius=(
                         reading.auxiliary_temperature_celsius
@@ -292,6 +320,13 @@ class GenialT31Coordinator(DataUpdateCoordinator[T31Data]):
                     protocol_error=None,
                 )
             )
+            if should_disconnect:
+                self._power_save_until = now + timedelta(seconds=POWER_SAVE_SECONDS)
+                _LOGGER.debug(
+                    "Thermometer confirmed unworn; suppressing reconnects for %s seconds",
+                    POWER_SAVE_SECONDS,
+                )
+                await self._async_disconnect()
             return
         if command == COMMAND_BATTERY:
             battery = decode_battery(body)

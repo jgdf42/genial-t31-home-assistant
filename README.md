@@ -13,6 +13,7 @@ does not require the Tempal phone app, a cloud account, or a device key.
 - Five-to-fifteen-minute rolling baseline, rise, and rate-of-change sensors
 - Auxiliary temperature, battery percentage, and battery voltage sensors
 - Connection status, RSSI, and last-reading timestamp
+- Automatic unworn disconnects to reduce unnecessary BLE activity
 - Automatic reconnection when the device becomes available again
 - Home Assistant Bluetooth proxy support
 - Fully local operation
@@ -74,10 +75,28 @@ The integration creates these entities:
 - **Signal strength**: Bluetooth RSSI; disabled by default
 - **Last reading**: time of the most recent valid temperature report
 - **Connected**: on only while the device is connected and sending fresh data
+- **Worn**: confirmed from sustained temperature, with an unknown state during
+  the initial wear check
 
 The thermometer normally sends temperature reports every one to six seconds.
 If no valid data arrives for 45 seconds, the integration marks it disconnected
 and attempts to reconnect when it is seen again.
+
+### Unworn power saving
+
+When body temperature remains below 89°F (31.67°C) for ten continuous minutes,
+the integration treats the thermometer as unworn and disconnects Bluetooth.
+Automatic reconnects are suppressed for 15 minutes to reduce unnecessary BLE
+activity. Home Assistant then reconnects briefly to check the probe:
+
+- If it has warmed above 89°F, normal continuous monitoring resumes.
+- If it remains below 89°F for one minute, Home Assistant disconnects again and
+  begins another 15-minute sleep interval.
+
+The ten-minute initial confirmation avoids disconnecting during ordinary
+placement and warm-up. Brief dips are cancelled as soon as the reported
+temperature returns above 89°F. The **Worn** entity exposes the confirmed state
+for cards and automations.
 
 Readings below 97°F are excluded from trend calculations. A baseline becomes
 available after five minutes of continuous on-body readings. This warm-up gate
@@ -98,7 +117,8 @@ To add it:
 4. Replace its example entity IDs with the entities created on your system.
 
 The example shows current temperature, battery, a one-hour temperature and
-baseline graph, rise, rate of change, connection state, and last-reading time.
+baseline graph, rise, rate of change, connection and worn states, and
+last-reading time.
 
 ## Automation blueprints
 

@@ -46,6 +46,12 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(reading.percent, 100)
         self.assertEqual(reading.voltage_mv, 3100)
 
+    def test_accepts_cold_off_body_temperature(self) -> None:
+        body = bytes.fromhex("09c40bb8030c0000")  # 25.00 C and 30.00 C
+        reading = protocol.decode_temperature(body)
+        self.assertEqual(reading.temperature_celsius, 25.0)
+        self.assertEqual(reading.auxiliary_temperature_celsius, 30.0)
+
     def test_rejects_bad_checksum(self) -> None:
         with self.assertRaises(protocol.ProtocolError):
             protocol.parse_frame(bytes.fromhex("a602a500006a"))

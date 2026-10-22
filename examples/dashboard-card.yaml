@@ -48,6 +48,8 @@ cards:
         name: Rate of change
       - entity: binary_sensor.genial_t31_thermometer_connected
         name: Connected
+      - entity: binary_sensor.genial_t31_thermometer_worn
+        name: Worn
       - entity: sensor.genial_t31_thermometer_last_reading
         name: Last reading
 

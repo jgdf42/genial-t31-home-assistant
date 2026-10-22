@@ -113,7 +113,7 @@ def decode_temperature(body: bytes) -> TemperatureReading:
         raise ProtocolError(f"Expected 8 temperature bytes, got {len(body)}")
     temperature = int.from_bytes(body[0:2], "big") / 100
     auxiliary = int.from_bytes(body[2:4], "big") / 100
-    if not 20 <= temperature <= 45 or not 0 <= auxiliary <= 50:
+    if not 0 <= temperature <= 45 or not 0 <= auxiliary <= 50:
         raise ProtocolError("Temperature is outside the supported range")
     weekday, hour, minute, second = body[4:8]
     if weekday > 6 or hour > 23 or minute > 59 or second > 59:
