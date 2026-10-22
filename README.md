@@ -113,6 +113,8 @@ cards, so no additional frontend package is required:
 
 [`examples/dashboard-card.yaml`](examples/dashboard-card.yaml)
 
+<img width="432" height="896" alt="card" src="https://github.com/user-attachments/assets/abb22c77-ea7e-4cae-bb56-828e678f5cc3" />
+
 To add it:
 
 1. Open the desired dashboard and select **Edit dashboard**.
