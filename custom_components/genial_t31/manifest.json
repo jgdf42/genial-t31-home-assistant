@@ -8,13 +8,14 @@
       "service_uuid": "00001809-0000-1000-8000-00805f9b34fb"
     }
   ],
-  "codeowners": [],
+  "codeowners": ["@jgdf42"],
   "config_flow": true,
   "dependencies": ["bluetooth"],
   "documentation": "https://github.com/jgdf42/genial-t31-home-assistant",
+  "issue_tracker": "https://github.com/jgdf42/genial-t31-home-assistant/issues",
   "integration_type": "device",
   "iot_class": "local_push",
   "requirements": [],
-  "version": "1.1.0"
+  "version": "1.2.0"
 }
 

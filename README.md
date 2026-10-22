@@ -31,7 +31,7 @@ it to Home Assistant.
 
 ## Installation with HACS
 
-Until this repository is included in the default HACS catalog:
+### HACS custom repository (available now)
 
 1. Open HACS in Home Assistant.
 2. Select **Integrations**.
@@ -39,6 +39,10 @@ Until this repository is included in the default HACS catalog:
 4. Enter this repository's GitHub URL and select **Integration**.
 5. Find **Genial T31 Thermometer** in HACS and install it.
 6. Restart Home Assistant.
+
+The project has also been prepared for submission to HACS's default catalog.
+After that submission is reviewed and accepted, users can skip the custom
+repository steps and find **Genial T31 Thermometer** directly in HACS.
 
 ## Manual installation
 
